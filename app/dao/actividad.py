@@ -72,3 +72,39 @@ def dao_crear_registro(
     last_id = db.execute(text("SELECT LAST_INSERT_ID() AS id")).mappings().first()["id"]
     db.commit()
     return last_id
+
+   # ---- RUTA 4: /registro-horas/index ----------------------------------------
+def dao_filtrar_horas(
+    db: Session,
+    id_persona: int | None,
+    estado: int | None,
+    fecha_inicio: str | None,  # yyyy-MM-dd -> maps to 'dia'
+    fecha_fin: str | None,     # yyyy-MM-dd -> maps to 'dia'
+):
+    parts = ["SELECT * FROM out_registro_horas WHERE 1=1"]
+    params: dict = {}
+
+    if id_persona is not None:
+        parts.append("AND id_persona = :idPersona")
+        params["idPersona"] = id_persona
+
+    if estado is not None:
+        parts.append("AND estado = :estado")
+        params["estado"] = estado
+
+    # Rango sobre la columna 'dia' (DATE)
+    if fecha_inicio and fecha_fin:
+        parts.append("AND dia BETWEEN :fini AND :ffin")
+        params["fini"] = fecha_inicio
+        params["ffin"] = fecha_fin
+    elif fecha_inicio:
+        parts.append("AND dia >= :fini")
+        params["fini"] = fecha_inicio
+    elif fecha_fin:
+        parts.append("AND dia <= :ffin")
+        params["ffin"] = fecha_fin
+
+    parts.append("ORDER BY id DESC")
+    sql = text("\n".join(parts))
+    rows = db.execute(sql, params).mappings().all()
+    return [dict(r) for r in rows]

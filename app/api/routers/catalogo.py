@@ -1,3 +1,4 @@
+from app.dao.actividad import dao_filtrar_horas
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -39,3 +40,15 @@ def create_actividad(personalId: int, idTipoAct: int, hora: str, fecha: str,
         detalle=detalle or "Detalle no proporcionado"
     )
     return {"status": "ok", "id": last_id, "message": "Actividad creada correctamente"}
+
+# ROUTE 4: Filtra registros de horas por persona, estado y rango de fechas.
+# Ejemplo: GET /actividades/registro-horas/index?idPersona=8&estado=9&fechaIniciof=2025-07-10&fechaFin=2025-07-10
+@router.get("/registro-horas/index")
+def filtrar_horas(
+    idPersona: int | None = None,
+    estado: int | None = None,
+    fechaIniciof: str | None = None,
+    fechaFin: str | None = None,
+    db: Session = Depends(get_db),
+):
+    return dao_filtrar_horas(db, idPersona, estado, fechaIniciof, fechaFin)
