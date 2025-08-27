@@ -108,3 +108,26 @@ def dao_filtrar_horas(
     sql = text("\n".join(parts))
     rows = db.execute(sql, params).mappings().all()
     return [dict(r) for r in rows]
+
+# ---- DAO: crear registros de horas (Ruta 5) ----
+from sqlalchemy import text
+
+def dao_crear_registro_horas(db, id_proyecto: int, id_persona: int, actividades: list, dia: str, create_user: str):
+    ids = []
+    for item in actividades:
+        sql = text("""
+            INSERT INTO out_registro_horas (id_proyecto, id_persona, actividad, horas, dia, estado, create_user, create_date)
+            VALUES (:idProyecto, :idPersona, :actividad, :horas, :dia, 1, :createUser, NOW())
+        """)
+        params = {
+            "idProyecto": id_proyecto,
+            "idPersona": id_persona,
+            "actividad": item["actividad"],
+            "horas": item["horas"],
+            "dia": dia,
+            "createUser": create_user,
+        }
+        result = db.execute(sql, params)
+        ids.append(result.lastrowid)
+    db.commit()
+    return ids

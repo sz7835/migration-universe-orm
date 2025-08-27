@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from app.api.routers.catalogo import router as catalogo_router
+from app.api.routers.catalogo import router as catalogo_router, router_horas as registro_horas_router
 
 app = FastAPI(title="migration-universe-orm")
 
-# IMPORTANT: no extra prefix here unless you want /api/...
-app.include_router(catalogo_router)
+app.include_router(catalogo_router)        # /actividades/*
+app.include_router(registro_horas_router)  # /registro-horas/*
 
 @app.get("/")
 def root():

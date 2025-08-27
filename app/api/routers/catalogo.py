@@ -1,15 +1,31 @@
-from app.dao.actividad import dao_filtrar_horas
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
 from app.core.db import get_db
 from app.dao.actividad import (
     dao_list_registros_por_persona_tipo,
     dao_filtrar_registros,
     dao_crear_registro,
+    dao_crear_registro_horas,   # <-- needed for route 5
+    dao_filtrar_horas,          # <-- keep if you use the hours filter route
 )
 
 router = APIRouter(prefix="/actividades", tags=["actividades"])
+router_horas = APIRouter(prefix="/registro-horas", tags=["registro-horas"])  # <-- SPEC prefix
+
+
+class HorasDetalleItem(BaseModel):
+    actividad: str
+    horas: int | str
+
+class CrearHorasBody(BaseModel):
+    idProyecto: int | str
+    idPersona: int
+    detalle: List[HorasDetalleItem]
+    dia: str                  # yyyy-MM-dd
+    createUser: str
 
 # ROUTE 1: matches spec. Returns registros by persona/tipo and optional fecha.
 # Example: GET /actividades/tipoActividad?idPersona=8&idActividad=1&fecha=2025-07-10
@@ -52,3 +68,19 @@ def filtrar_horas(
     db: Session = Depends(get_db),
 ):
     return dao_filtrar_horas(db, idPersona, estado, fechaIniciof, fechaFin)
+
+    # ---- ROUTE 5: POST /registro-horas/create ----
+@router_horas.post("/create")
+def crear_registro_horas(payload: CrearHorasBody, db: Session = Depends(get_db)):
+    if not payload.detalle:
+        raise HTTPException(status_code=400, detail="detalle no puede estar vacío")
+
+    ids = dao_crear_registro_horas(
+        db,
+        id_proyecto=int(payload.idProyecto),
+        id_persona=payload.idPersona,
+        actividades=[{"actividad": d.actividad, "horas": int(d.horas)} for d in payload.detalle],
+        dia=payload.dia,
+        create_user=payload.createUser,
+    )
+    return {"status": "ok", "ids": ids, "message": "Registros de horas creados correctamente"}
