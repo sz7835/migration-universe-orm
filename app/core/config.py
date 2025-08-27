@@ -1,20 +1,23 @@
 import os
 from dotenv import load_dotenv
+from sqlalchemy.engine import URL
 
 load_dotenv()
 
-APP_NAME = os.getenv("APP_NAME", "Migration Universe ORM")
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+# Either set DATABASE_URL directly in .env, or let these vars build it:
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASS = os.getenv("DB_PASS", "Delt@2023")  # '@' is fine here
+DB_HOST = os.getenv("DB_HOST", "161.132.202.110")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
+DB_NAME = os.getenv("DB_NAME", "deltanet")
 
-# Optional: allow parts if you don't use a full DATABASE_URL
+DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    host = os.getenv("DB_HOST", "127.0.0.1")
-    port = os.getenv("DB_PORT", "3306")
-    name = os.getenv("DB_NAME", "")
-    user = os.getenv("DB_USER", "")
-    pwd  = os.getenv("DB_PASSWORD", "")
-    if name and user:
-        DATABASE_URL = f"mysql+pymysql://{user}:{pwd}@{host}:{port}/{name}"
-
-HOST = os.getenv("HOST", "127.0.0.1")
-PORT = int(os.getenv("PORT", "8085"))
+    DATABASE_URL = URL.create(
+        "mysql+pymysql",
+        username=DB_USER,
+        password=DB_PASS,   # handles '@' safely (no %40 needed)
+        host=DB_HOST,
+        port=DB_PORT,
+        database=DB_NAME,
+    )
