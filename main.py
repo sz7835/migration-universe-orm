@@ -8,6 +8,5 @@ app = FastAPI(title="Migration Universe ORM")
 def root():
     return {"status": "ok", "message": "FastAPI running"}
 
-# Register routers (keeps original Flask-style paths)
+# include our routes
 app.include_router(catalogo_router)
-
