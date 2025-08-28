@@ -49,7 +49,7 @@ def dao_filtrar_registros(
     sql = text("\n".join(parts))
     return [dict(r) for r in db.execute(sql, params).mappings().all()]
 
-# ---- RUTA 3: /actividades/create -------------------------------------------
+# ---- RUTA 3: /actividades/create ----------------------------------------------
 def dao_crear_registro(
     db: Session, personal_id: int, tipo_act_id: int, fecha: str, hora: str,
     create_user: str, detalle: str = "Detalle no proporcionado"

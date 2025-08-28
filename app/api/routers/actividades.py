@@ -58,8 +58,8 @@ def create_actividad(personalId: int, idTipoAct: int, hora: str, fecha: str,
     return {"status": "ok", "id": last_id, "message": "Actividad creada correctamente"}
 
 # ROUTE 4: Filtra registros de horas por persona, estado y rango de fechas.
-# Ejemplo: GET /actividades/registro-horas/index?idPersona=8&estado=9&fechaIniciof=2025-07-10&fechaFin=2025-07-10
-@router.get("/registro-horas/index")
+# Ejemplo: GET /registro-horas/index?idPersona=8&estado=9&fechaIniciof=2025-07-10&fechaFin=2025-07-10
+@router_horas.get("/index")
 def filtrar_horas(
     idPersona: int | None = None,
     estado: int | None = None,
