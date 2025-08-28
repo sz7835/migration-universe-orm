@@ -1,10 +1,11 @@
 from typing import Optional, List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,  HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.db import get_db
-from app.dao.registro_horas import dao_filtrar_horas, dao_crear_registro_horas, dao_listar_proyectos_por_persona
+from app.dao.registro_horas import dao_filtrar_horas, dao_crear_registro_horas, dao_listar_proyectos_por_persona, dao_delete_registro_horas
 
 router = APIRouter(prefix="/registro-horas", tags=["registro-horas"])
 
@@ -47,7 +48,7 @@ def crear_horas(body: CrearHorasBody, db: Session = Depends(get_db)):
         detalle=[{"actividad": d.actividad, "horas": d.horas} for d in body.detalle],
     )
     return {"status": "ok", "inserted": len(ids), "ids": ids}
-    
+
 # ROUTE 6: Lista proyectos por persona (POST)
 # Ejemplo: POST /registro-horas/mostrarProyecto?idPersona=8
 @router.post("/mostrarProyecto")
@@ -57,3 +58,14 @@ def mostrar_proyecto(
     db: Session = Depends(get_db),
 ):
     return dao_listar_proyectos_por_persona(db, idPersona, solo_activos=activos)
+
+# Route 7: DELETE /registro-horas/delete?id=3505
+# Deletes a registro_horas by ID, returns 404 if not found.
+@router.delete("/delete")
+def delete_registro_horas(id: int, db: Session = Depends(get_db)):
+    ok = dao_delete_registro_horas(db, id)
+
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Registro con id {id} no encontrado.")
+
+    return {"success": True, "message": f"Registro con id {id} eliminado correctamente."}

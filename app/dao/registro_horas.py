@@ -101,3 +101,21 @@ def dao_listar_proyectos_por_persona(
     """)
     rows = db.execute(sql, {"p": id_persona}).mappings().all()
     return [dict(r) for r in rows]
+
+# DAO for Route 7: deletes a registro_horas by ID.
+# Returns True if deleted, None if not found.
+def dao_delete_registro_horas(db, id: int):
+    row = db.execute(
+        text("SELECT id FROM out_registro_horas WHERE id = :id LIMIT 1"),
+        {"id": id}
+    ).fetchone()
+
+    if not row:
+        return None
+
+    db.execute(
+        text("DELETE FROM out_registro_horas WHERE id = :id"),
+        {"id": id}
+    )
+    db.commit()
+    return True
