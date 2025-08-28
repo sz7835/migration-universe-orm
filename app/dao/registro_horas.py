@@ -79,3 +79,25 @@ def dao_crear_registro_horas(
 
     db.commit()
     return inserted_ids
+# ----------------------------
+# ROUTE 6: /registro-horas/mostrarProyecto  (POST)
+# Lista proyectos asociados a una persona
+# ----------------------------
+from typing import List, Dict
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+def dao_listar_proyectos_por_persona(
+    db: Session,
+    id_persona: int,
+    solo_activos: bool = True,   # si true => estado=1
+) -> List[Dict]:
+    sql = text(f"""
+        SELECT id, id_persona, codigo, descripcion, estado, create_user, create_date
+        FROM out_registro_proyecto
+        WHERE id_persona = :p
+        {"AND estado = 1" if solo_activos else ""}
+        ORDER BY id DESC
+    """)
+    rows = db.execute(sql, {"p": id_persona}).mappings().all()
+    return [dict(r) for r in rows]

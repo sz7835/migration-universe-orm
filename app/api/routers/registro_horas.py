@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.db import get_db
-from app.dao.registro_horas import dao_filtrar_horas, dao_crear_registro_horas
+from app.dao.registro_horas import dao_filtrar_horas, dao_crear_registro_horas, dao_listar_proyectos_por_persona
 
 router = APIRouter(prefix="/registro-horas", tags=["registro-horas"])
 
@@ -47,3 +47,13 @@ def crear_horas(body: CrearHorasBody, db: Session = Depends(get_db)):
         detalle=[{"actividad": d.actividad, "horas": d.horas} for d in body.detalle],
     )
     return {"status": "ok", "inserted": len(ids), "ids": ids}
+    
+# ROUTE 6: Lista proyectos por persona (POST)
+# Ejemplo: POST /registro-horas/mostrarProyecto?idPersona=8
+@router.post("/mostrarProyecto")
+def mostrar_proyecto(
+    idPersona: int,
+    activos: bool = True,
+    db: Session = Depends(get_db),
+):
+    return dao_listar_proyectos_por_persona(db, idPersona, solo_activos=activos)
