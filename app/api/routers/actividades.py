@@ -4,14 +4,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.dao.actividad import (
+from app.dao.actividades import (
     dao_list_registros_por_persona_tipo,
     dao_filtrar_registros,
     dao_crear_registro,
-    dao_crear_registro_horas,   
     dao_filtrar_horas,
-    dao_listar_proyectos_por_persona,          
 )
+
 
 router = APIRouter(prefix="/actividades", tags=["actividades"])
 router_horas = APIRouter(prefix="/registro-horas", tags=["registro-horas"])  # <-- SPEC prefix
@@ -69,26 +68,3 @@ def filtrar_horas(
     db: Session = Depends(get_db),
 ):
     return dao_filtrar_horas(db, idPersona, estado, fechaIniciof, fechaFin)
-
-    # ---- ROUTE 5: POST /registro-horas/create ----
-@router_horas.post("/create")
-def crear_registro_horas(payload: CrearHorasBody, db: Session = Depends(get_db)):
-    if not payload.detalle:
-        raise HTTPException(status_code=400, detail="detalle no puede estar vacío")
-
-    ids = dao_crear_registro_horas(
-        db,
-        id_proyecto=int(payload.idProyecto),
-        id_persona=payload.idPersona,
-        actividades=[{"actividad": d.actividad, "horas": int(d.horas)} for d in payload.detalle],
-        dia=payload.dia,
-        create_user=payload.createUser,
-    )
-    return {"status": "ok", "ids": ids, "message": "Registros de horas creados correctamente"}
-
-# ---- ROUTE 6: POST /registro-horas/mostrarProyecto ----
-# Ejemplo: POST /registro-horas/mostrarProyecto?idPersona=8
-@router_horas.post("/mostrarProyecto")
-def mostrar_proyectos(idPersona: int, db: Session = Depends(get_db)):
-    data = dao_listar_proyectos_por_persona(db, idPersona)
-    return {"status": "ok", "total": len(data), "data": data}
