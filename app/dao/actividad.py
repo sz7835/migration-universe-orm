@@ -2,6 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models import ActividadTipo
+from app.models.registry import OutRegistroProyecto
 
 # ---- TIPO ACTIVIDAD (ORM) ---------------------------------------------------
 def dao_get_tipo_actividad(db: Session):
@@ -110,7 +111,7 @@ def dao_filtrar_horas(
     return [dict(r) for r in rows]
 
 # ---- DAO: crear registros de horas (Ruta 5) ----
-from sqlalchemy import text
+from sqlalchemy import text 
 
 def dao_crear_registro_horas(db, id_proyecto: int, id_persona: int, actividades: list, dia: str, create_user: str):
     ids = []
@@ -131,3 +132,27 @@ def dao_crear_registro_horas(db, id_proyecto: int, id_persona: int, actividades:
         ids.append(result.lastrowid)
     db.commit()
     return ids
+
+# ---- DAO for ROUTE 6: mostrar proyectos por persona ----
+def dao_listar_proyectos_por_persona(db: Session, id_persona: int) -> list[dict]:
+    rows = (
+        db.query(OutRegistroProyecto)
+        .filter(OutRegistroProyecto.id_persona == id_persona)
+        .order_by(OutRegistroProyecto.id.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": r.id,
+            "id_persona": r.id_persona,
+            "codigo": r.codigo,
+            "descripcion": r.descripcion,
+            "estado": r.estado,
+            "create_user": r.create_user,
+            "create_date": r.create_date,
+            "update_user": r.update_user,
+            "update_date": r.update_date,
+        }
+        for r in rows
+    ]
