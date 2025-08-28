@@ -8,7 +8,6 @@ from app.dao.actividades import (
     dao_list_registros_por_persona_tipo,
     dao_filtrar_registros,
     dao_crear_registro,
-    dao_filtrar_horas,
 )
 
 
@@ -56,15 +55,3 @@ def create_actividad(personalId: int, idTipoAct: int, hora: str, fecha: str,
         detalle=detalle or "Detalle no proporcionado"
     )
     return {"status": "ok", "id": last_id, "message": "Actividad creada correctamente"}
-
-# ROUTE 4: Filtra registros de horas por persona, estado y rango de fechas.
-# Ejemplo: GET /registro-horas/index?idPersona=8&estado=9&fechaIniciof=2025-07-10&fechaFin=2025-07-10
-@router_horas.get("/index")
-def filtrar_horas(
-    idPersona: int | None = None,
-    estado: int | None = None,
-    fechaIniciof: str | None = None,
-    fechaFin: str | None = None,
-    db: Session = Depends(get_db),
-):
-    return dao_filtrar_horas(db, idPersona, estado, fechaIniciof, fechaFin)
