@@ -119,3 +119,29 @@ def dao_delete_registro_horas(db, id: int):
     )
     db.commit()
     return True
+
+    
+# DAO for Route 8: updates a registro_horas by ID.
+# Returns True if updated, None if not found.
+def dao_update_registro_horas(db, id: int, actividad: str, horas: int, update_user: str):
+    row = db.execute(
+        text("SELECT id FROM out_registro_horas WHERE id = :id LIMIT 1"),
+        {"id": id}
+    ).fetchone()
+
+    if not row:
+        return None
+
+    db.execute(
+        text("""
+            UPDATE out_registro_horas
+            SET actividad = :actividad,
+                horas = :horas,
+                update_user = :update_user,
+                update_date = NOW()
+            WHERE id = :id
+        """),
+        {"actividad": actividad, "horas": horas, "update_user": update_user, "id": id}
+    )
+    db.commit()
+    return True

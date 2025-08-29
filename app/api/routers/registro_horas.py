@@ -5,7 +5,14 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.db import get_db
-from app.dao.registro_horas import dao_filtrar_horas, dao_crear_registro_horas, dao_listar_proyectos_por_persona, dao_delete_registro_horas
+from app.dao.registro_horas import (
+    dao_filtrar_horas,
+    dao_crear_registro_horas,
+    dao_listar_proyectos_por_persona,
+    dao_delete_registro_horas,
+    dao_update_registro_horas,
+)
+
 
 router = APIRouter(prefix="/registro-horas", tags=["registro-horas"])
 
@@ -69,3 +76,20 @@ def delete_registro_horas(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Registro con id {id} no encontrado.")
 
     return {"success": True, "message": f"Registro con id {id} eliminado correctamente."}
+
+# Route 8: POST /registro-horas/update
+# Updates a registro_horas by ID. Returns 404 if not found.
+@router.post("/update")
+def update_registro_horas(
+    id: int,
+    actividad: str,
+    horas: int,
+    update_user: str,
+    db: Session = Depends(get_db)
+):
+    ok = dao_update_registro_horas(db, id, actividad, horas, update_user)
+
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Registro con id {id} no encontrado.")
+
+    return {"success": True, "message": f"Registro con id {id} actualizado correctamente."}
