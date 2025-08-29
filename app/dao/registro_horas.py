@@ -145,3 +145,19 @@ def dao_update_registro_horas(db, id: int, actividad: str, horas: int, update_us
     )
     db.commit()
     return True
+
+# DAO for Route 9: activates one or many registros_horas.
+# Returns count of updated rows.
+def dao_activate_registros(db, registros: list[int], update_user: str):
+    db.execute(
+        text("""
+            UPDATE out_registro_horas
+            SET estado = 1,
+                update_user = :update_user,
+                update_date = NOW()
+            WHERE id IN :ids
+        """),
+        {"update_user": update_user, "ids": tuple(registros)},
+    )
+    db.commit()
+    return len(registros)

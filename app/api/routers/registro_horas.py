@@ -11,6 +11,7 @@ from app.dao.registro_horas import (
     dao_listar_proyectos_por_persona,
     dao_delete_registro_horas,
     dao_update_registro_horas,
+    dao_activate_registros,
 )
 
 
@@ -93,3 +94,18 @@ def update_registro_horas(
         raise HTTPException(status_code=404, detail=f"Registro con id {id} no encontrado.")
 
     return {"success": True, "message": f"Registro con id {id} actualizado correctamente."}
+
+    # Route 9: POST /registro-horas/activate
+# Activates one or more registros_horas (estado = 1).
+class ActivateBody(BaseModel):
+    registro: list[dict]   # e.g. [{"id": 3507}, {"id": 3386}]
+    updateUser: str
+
+@router.post("/activate")
+def activate_registros(body: ActivateBody, db: Session = Depends(get_db)):
+    ids = [r["id"] for r in body.registro]
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided for activation.")
+
+    updated = dao_activate_registros(db, ids, body.updateUser)
+    return {"success": True, "message": f"{updated} registros activados correctamente."}
