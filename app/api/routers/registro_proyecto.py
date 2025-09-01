@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Form
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
@@ -6,7 +6,8 @@ from app.dao.registro_proyecto import (
     dao_filtrar_proyectos,
     dao_crear_proyecto,
     dao_eliminar_proyecto,
-    dao_actualizar_proyecto,     
+    dao_actualizar_proyecto,   
+    dao_activar_proyectos,   
 )
 
 router = APIRouter(prefix="/registro-proyecto", tags=["registro-proyecto"])
@@ -82,3 +83,21 @@ def actualizar_proyecto(
     if not result["updated"]:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado o sin cambios")
     return {"mensaje": "Proyecto actualizado correctamente", "resultado": result}
+
+    # Ruta 14: Activar proyectos
+# Método: POST /registro-proyecto/activate
+@router.post("/activate")
+def activar_proyectos(
+    updateUser: str = Form(...),
+    proyects: str = Form(...),   # comma-separated IDs
+    db: Session = Depends(get_db),
+):
+    try:
+        ids = [int(x.strip()) for x in proyects.split(",") if x.strip()]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato inválido en 'proyects'")
+
+    result = dao_activar_proyectos(db=db, ids=ids, update_user=updateUser)
+    if not result["activated"]:
+        raise HTTPException(status_code=404, detail="Proyectos no encontrados")
+    return {"mensaje": "Proyectos activados correctamente", "resultado": result}

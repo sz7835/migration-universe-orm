@@ -181,3 +181,22 @@ def dao_actualizar_proyecto(db, id_proyecto: int, id_persona: int,
     )
     db.commit()
     return {"updated": result.rowcount > 0, "affected": result.rowcount}
+
+    # DAO Route 14: activate one or multiple projects (set estado=1).
+# Returns dict with number of affected rows.
+def dao_activar_proyectos(db, ids: list[int], update_user: str) -> dict:
+    if not ids:
+        return {"activated": False, "affected": 0}
+
+    result = db.execute(
+        text("""
+            UPDATE out_registro_proyecto
+               SET estado = 1,
+                   update_user = :uuser,
+                   update_date = CURRENT_TIMESTAMP
+             WHERE id IN :ids
+        """),
+        {"uuser": update_user, "ids": tuple(ids)},
+    )
+    db.commit()
+    return {"activated": result.rowcount > 0, "affected": result.rowcount}
