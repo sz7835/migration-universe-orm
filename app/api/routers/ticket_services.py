@@ -6,6 +6,7 @@ from app.dao.ticket_services import (
     dao_actualizar_ticket,
     dao_derivar_ticket,
     dao_reasignar_area_servicio, 
+    dao_reabrir_ticket,  
 )
 
 router = APIRouter(prefix="/ticket", tags=["ticket-services"])
@@ -97,5 +98,40 @@ def reasignar_area_servicio(
 
     return {
         "mensaje": "Ticket reasignado correctamente",
+        "resultado": result,
+    }
+
+
+# -------------------------
+# RUTA 19: Reabrir Ticket
+# POST /ticket/cerrar?usuario=bsayan&idTicket=918&estadoId=7&descripcion=Reapertura
+# -------------------------
+@router.post("/cerrar", status_code=status.HTTP_200_OK)
+def reabrir_ticket(
+    usuario: str,
+    idTicket: int,
+    estadoId: int,
+    descripcion: str,
+    db: Session = Depends(get_db),
+):
+    result = dao_reabrir_ticket(
+        db=db,
+        id_ticket=idTicket,
+        usuario=usuario,
+        estado_id=estadoId,
+        descripcion=descripcion,
+    )
+
+    if not result["exists"]:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+
+    if not result["updated"]:
+        return {
+            "mensaje": "Sin cambios (ya estaba en ese estado)",
+            "resultado": result,
+        }
+
+    return {
+        "mensaje": "Ticket reabierto correctamente",
         "resultado": result,
     }

@@ -167,3 +167,60 @@ def dao_reasignar_area_servicio(
             + ([update_date_col] if update_date_col in columns else []),
         "schema": schema,
     }
+
+# -------------------------
+# DAO RUTA 19: Reabrir ticket (cambiar estado y registrar auditoría)
+# -------------------------
+def dao_reabrir_ticket(
+    db: Session,
+    id_ticket: int,
+    usuario: str,
+    estado_id: int,
+    descripcion: str,
+) -> dict:
+    schema = (db.execute(text("SELECT DATABASE() AS db")).fetchone() or [None])[0]
+
+    exists_row = db.execute(
+        text(f"SELECT id FROM {TABLE_TICKETS} WHERE id = :id"),
+        {"id": id_ticket},
+    ).fetchone()
+
+    if not exists_row:
+        return {"exists": False, "updated": False, "affected": 0, "schema": schema}
+
+    # columnas esperadas
+    update_user_col = "update_user"
+    update_date_col = "update_date"
+
+    try:
+        col_check = db.execute(text(f"SHOW COLUMNS FROM {TABLE_TICKETS}")).fetchall()
+        columns = {row[0] for row in col_check}
+    except Exception:
+        columns = set()
+
+    setters = [
+        "estado_id = :estado",
+        "descripcion = :desc"
+    ]
+    params = {"id": id_ticket, "estado": estado_id, "desc": descripcion}
+
+    if update_user_col in columns:
+        setters.append(f"{update_user_col} = :u")
+        params["u"] = usuario
+
+    if update_date_col in columns:
+        setters.append(f"{update_date_col} = CURRENT_TIMESTAMP")
+
+    sql = f"UPDATE {TABLE_TICKETS} SET {', '.join(setters)} WHERE id = :id"
+    res = db.execute(text(sql), params)
+    db.commit()
+
+    return {
+        "exists": True,
+        "updated": res.rowcount > 0,
+        "affected": res.rowcount,
+        "changed_columns": ["estado_id","descripcion"]
+            + ([update_user_col] if update_user_col in columns else [])
+            + ([update_date_col] if update_date_col in columns else []),
+        "schema": schema,
+    }
