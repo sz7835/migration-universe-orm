@@ -1,4 +1,6 @@
+from typing import Optional, List
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 TABLE_TICKETS = "tkt_ticket_principal"
 
@@ -50,3 +52,60 @@ def dao_actualizar_ticket(
     res = db.execute(text(sql), params)
     db.commit()
     return {"updated": res.rowcount > 0, "affected": res.rowcount, "audit_cols": {"user": update_user_col, "date": update_date_col}}
+
+# -------------------------
+# DAO RUTA 17: derivar/asignar ticket a otro usuario
+# Cambia el usuario asignado (usuario_servicio_id) y registra auditoría.
+# -------------------------
+def dao_derivar_ticket(
+    db: Session,
+    id_ticket: int,
+    usuario: str,           # quien ejecuta la acción
+    nuevo_usuario_id: int,  # a quién se asigna
+) -> dict:
+    schema = (db.execute(text("SELECT DATABASE() AS db")).fetchone() or [None])[0]
+
+    # ¿Existe el ticket?
+    exists_row = db.execute(
+        text(f"SELECT id FROM {TABLE_TICKETS} WHERE id = :id"),
+        {"id": id_ticket},
+    ).fetchone()
+
+    if not exists_row:
+        return {"exists": False, "updated": False, "affected": 0, "schema": schema}
+
+    # Detectar nombres de columnas de auditoría si existen
+    update_user_col = "update_user"
+    update_date_col = "update_date"
+
+    try:
+        col_check = db.execute(text(f"SHOW COLUMNS FROM {TABLE_TICKETS}")).fetchall()
+        columns = {row[0] for row in col_check}
+    except Exception:
+        columns = set()
+
+    setters = ["usuario_servicio_id = :nuevo"]  # <<--- columna asignada en tu tabla
+    params = {"id": id_ticket, "nuevo": nuevo_usuario_id}
+
+    if update_user_col in columns:
+        setters.append(f"{update_user_col} = :u")
+        params["u"] = usuario
+
+    if update_date_col in columns:
+        setters.append(f"{update_date_col} = CURRENT_TIMESTAMP")
+
+    sql = f"UPDATE {TABLE_TICKETS} SET {', '.join(setters)} WHERE id = :id"
+    res = db.execute(text(sql), params)
+    db.commit()
+
+    return {
+        "exists": True,
+        "updated": res.rowcount > 0,   # 0 si ya estaba asignado a ese usuario
+        "affected": res.rowcount,
+        "changed_columns": ["usuario_servicio_id"] + (
+            [update_user_col] if update_user_col in columns else []
+        ) + (
+            [update_date_col] if update_date_col in columns else []
+        ),
+        "schema": schema,
+    }
