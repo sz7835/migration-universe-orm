@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
-from app.dao.registro_proyecto import dao_filtrar_proyectos
+from app.dao.registro_proyecto import (
+    dao_filtrar_proyectos,
+    dao_crear_proyecto,   
+)
 
 router = APIRouter(prefix="/registro-proyecto", tags=["registro-proyecto"])
 
@@ -22,3 +25,25 @@ def filtrar_proyectos(
         proyecto_descripcion=proyectoDescripcion,
         estado=estado,
     )
+
+    # Ruta 11: Crear un nuevo proyecto
+# Método: POST /registro-proyecto/save
+@router.post("/save", status_code=status.HTTP_201_CREATED)
+def crear_proyecto(
+    idConsultor: int,
+    codigo: str,
+    proyectoDescripcion: str,
+    createUser: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        creado = dao_crear_proyecto(
+            db=db,
+            id_consultor=idConsultor,
+            codigo=codigo,
+            proyecto_descripcion=proyectoDescripcion,
+            create_user=createUser,
+        )
+        return {"mensaje": "Proyecto creado correctamente", "proyecto": creado}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
