@@ -224,3 +224,24 @@ def dao_reabrir_ticket(
             + ([update_date_col] if update_date_col in columns else []),
         "schema": schema,
     }
+
+# -------------------------
+# DAO RUTA 20: Campos de filtro tickets
+# Devuelve lista de columnas clave de la tabla principal
+# -------------------------
+def dao_campos_filtro_tickets(db: Session) -> dict:
+    schema = (db.execute(text("SELECT DATABASE() AS db")).fetchone() or [None])[0]
+
+    # Obtenemos las columnas de la tabla de tickets
+    columnas = db.execute(
+        text(f"SHOW COLUMNS FROM {TABLE_TICKETS}")
+    ).fetchall()
+
+    # Armamos lista simple con nombres de campos
+    campos = [col[0] for col in columnas]
+
+    return {
+        "schema": schema,
+        "tabla": TABLE_TICKETS,
+        "campos": campos
+    }

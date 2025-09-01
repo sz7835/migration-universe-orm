@@ -7,6 +7,7 @@ from app.dao.ticket_services import (
     dao_derivar_ticket,
     dao_reasignar_area_servicio, 
     dao_reabrir_ticket,  
+    dao_campos_filtro_tickets, 
 )
 
 router = APIRouter(prefix="/ticket", tags=["ticket-services"])
@@ -133,5 +134,17 @@ def reabrir_ticket(
 
     return {
         "mensaje": "Ticket reabierto correctamente",
+        "resultado": result,
+    }
+
+# -------------------------
+# RUTA 20: Campos filtro tickets
+# GET /ticket/verTickets/read
+# -------------------------
+@router.get("/verTickets/read", status_code=status.HTTP_200_OK)
+def obtener_campos_filtro(db: Session = Depends(get_db)):
+    result = dao_campos_filtro_tickets(db=db)
+    return {
+        "mensaje": "Campos de filtro obtenidos correctamente",
         "resultado": result,
     }
