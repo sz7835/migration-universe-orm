@@ -146,3 +146,15 @@ def dao_crear_proyecto(db, id_consultor: int, codigo: str, proyecto_descripcion:
     ).fetchone()
 
     return dict(row._mapping) if row else {"id": new_id}
+
+    from sqlalchemy import text
+
+# DAO Route 12: hard delete project (removes row permanently).
+# Returns dict with status and number of affected rows.
+def dao_eliminar_proyecto(db, id_proyecto: int) -> dict:
+    result = db.execute(
+        text("DELETE FROM out_registro_proyecto WHERE id = :id"),
+        {"id": id_proyecto},
+    )
+    db.commit()
+    return {"deleted": result.rowcount > 0, "affected": result.rowcount}
