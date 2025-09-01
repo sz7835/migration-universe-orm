@@ -1,10 +1,11 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.dao.ticket_services import (
     dao_actualizar_ticket,
     dao_derivar_ticket,
+    dao_reasignar_area_servicio, 
 )
 
 router = APIRouter(prefix="/ticket", tags=["ticket-services"])
@@ -62,5 +63,39 @@ def derivar_ticket(
 
     return {
         "mensaje": "Ticket derivado correctamente",
+        "resultado": result,
+    }
+
+    # -------------------------
+# RUTA 18: Reasignar área y servicio
+# POST /ticket/reassign/{idTicket}
+# -------------------------
+@router.post("/reassign/{idTicket}", status_code=status.HTTP_200_OK)
+def reasignar_area_servicio(
+    idTicket: int,
+    idAreaDestino: int = Form(...),
+    idCatalogoServicio: int = Form(...),
+    usuEditado: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    result = dao_reasignar_area_servicio(
+        db=db,
+        id_ticket=idTicket,
+        area_destino=idAreaDestino,
+        catalogo_servicio=idCatalogoServicio,
+        usuario=usuEditado,
+    )
+
+    if not result["exists"]:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+
+    if not result["updated"]:
+        return {
+            "mensaje": "Sin cambios (ya tenía esos valores)",
+            "resultado": result,
+        }
+
+    return {
+        "mensaje": "Ticket reasignado correctamente",
         "resultado": result,
     }

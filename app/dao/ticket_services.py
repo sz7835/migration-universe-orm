@@ -7,7 +7,7 @@ TABLE_TICKETS = "tkt_ticket_principal"
 # DAO Route 16: update ticket information
 # Updates priority, catalog service, description, and audit fields if present
 def dao_actualizar_ticket(
-    db,
+    db, 
     id_ticket: int,
     usuario: str,
     id_prioridad: int,
@@ -107,5 +107,63 @@ def dao_derivar_ticket(
         ) + (
             [update_date_col] if update_date_col in columns else []
         ),
+        "schema": schema,
+    }
+
+# -------------------------
+# DAO RUTA 18: Reasignar área y servicio de un ticket
+# -------------------------
+def dao_reasignar_area_servicio(
+    db: Session,
+    id_ticket: int,
+    area_destino: int,
+    catalogo_servicio: int,
+    usuario: str,
+) -> dict:
+    schema = (db.execute(text("SELECT DATABASE() AS db")).fetchone() or [None])[0]
+
+    # ¿Existe el ticket?
+    exists_row = db.execute(
+        text(f"SELECT id FROM {TABLE_TICKETS} WHERE id = :id"),
+        {"id": id_ticket},
+    ).fetchone()
+
+    if not exists_row:
+        return {"exists": False, "updated": False, "affected": 0, "schema": schema}
+
+    # Auditoría
+    update_user_col = "update_user"
+    update_date_col = "update_date"
+
+    try:
+        col_check = db.execute(text(f"SHOW COLUMNS FROM {TABLE_TICKETS}")).fetchall()
+        columns = {row[0] for row in col_check}
+    except Exception:
+        columns = set()
+
+    setters = [
+        "area_destino_id = :area",
+        "catalogo_servicio_id = :servicio",
+    ]
+    params = {"id": id_ticket, "area": area_destino, "servicio": catalogo_servicio}
+
+    if update_user_col in columns:
+        setters.append(f"{update_user_col} = :u")
+        params["u"] = usuario
+
+    if update_date_col in columns:
+        setters.append(f"{update_date_col} = CURRENT_TIMESTAMP")
+
+    sql = f"UPDATE {TABLE_TICKETS} SET {', '.join(setters)} WHERE id = :id"
+    res = db.execute(text(sql), params)
+    db.commit()
+
+    return {
+        "exists": True,
+        "updated": res.rowcount > 0,
+        "affected": res.rowcount,
+        "changed_columns": ["area_destino_id", "catalogo_servicio_id"]
+            + ([update_user_col] if update_user_col in columns else [])
+            + ([update_date_col] if update_date_col in columns else []),
         "schema": schema,
     }
