@@ -7,7 +7,8 @@ from app.dao.registro_proyecto import (
     dao_crear_proyecto,
     dao_eliminar_proyecto,
     dao_actualizar_proyecto,   
-    dao_activar_proyectos,   
+    dao_activar_proyectos,
+    dao_cambiar_estado_proyecto,     
 )
 
 router = APIRouter(prefix="/registro-proyecto", tags=["registro-proyecto"])
@@ -101,3 +102,16 @@ def activar_proyectos(
     if not result["activated"]:
         raise HTTPException(status_code=404, detail="Proyectos no encontrados")
     return {"mensaje": "Proyectos activados correctamente", "resultado": result}
+
+    # Ruta 15: Cambiar estado de un proyecto
+# Método: POST /registro-proyecto/changeStatus
+@router.post("/changeStatus")
+def cambiar_estado_proyecto(
+    idProyecto: int,
+    updateUser: str,
+    db: Session = Depends(get_db),
+):
+    result = dao_cambiar_estado_proyecto(db=db, id_proyecto=idProyecto, update_user=updateUser)
+    if result.get("not_found"):
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return {"mensaje": "Estado del proyecto cambiado correctamente", "resultado": result}

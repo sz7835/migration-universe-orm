@@ -200,3 +200,37 @@ def dao_activar_proyectos(db, ids: list[int], update_user: str) -> dict:
     )
     db.commit()
     return {"activated": result.rowcount > 0, "affected": result.rowcount}
+
+   # DAO Route 15: change status of a project (cycle estado 0→1→2→3→4→0).
+# Returns dict with old/new estado and affected rows.
+def dao_cambiar_estado_proyecto(db, id_proyecto: int, update_user: str) -> dict:
+    # Get current estado
+    row = db.execute(
+        text("SELECT estado FROM out_registro_proyecto WHERE id = :id"),
+        {"id": id_proyecto},
+    ).fetchone()
+
+    if not row:
+        return {"changed": False, "not_found": True}
+
+    current_estado = row.estado if row.estado is not None else 0
+    new_estado = (current_estado + 1) % 5   # cycle 0-4
+
+    result = db.execute(
+        text("""
+            UPDATE out_registro_proyecto
+               SET estado = :new_estado,
+                   update_user = :uuser,
+                   update_date = CURRENT_TIMESTAMP
+             WHERE id = :id
+        """),
+        {"new_estado": new_estado, "uuser": update_user, "id": id_proyecto},
+    )
+    db.commit()
+
+    return {
+        "changed": result.rowcount > 0,
+        "old_estado": current_estado,
+        "new_estado": new_estado,
+        "affected": result.rowcount,
+    }
