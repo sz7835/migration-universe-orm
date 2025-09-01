@@ -158,3 +158,26 @@ def dao_eliminar_proyecto(db, id_proyecto: int) -> dict:
     )
     db.commit()
     return {"deleted": result.rowcount > 0, "affected": result.rowcount}
+
+    # DAO Route 13: update project (updates description and update_user/date).
+# Returns dict with status and affected rows.
+def dao_actualizar_proyecto(db, id_proyecto: int, id_persona: int,
+                            proyecto_descripcion: str, update_user: str) -> dict:
+    result = db.execute(
+        text("""
+            UPDATE out_registro_proyecto
+               SET descripcion   = :desc,
+                   update_user   = :uuser,
+                   update_date   = CURRENT_TIMESTAMP
+             WHERE id           = :id
+               AND id_persona   = :idp
+        """),
+        {
+            "id": id_proyecto,
+            "idp": id_persona,
+            "desc": proyecto_descripcion,
+            "uuser": update_user,
+        },
+    )
+    db.commit()
+    return {"updated": result.rowcount > 0, "affected": result.rowcount}

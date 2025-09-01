@@ -5,7 +5,8 @@ from app.core.db import get_db
 from app.dao.registro_proyecto import (
     dao_filtrar_proyectos,
     dao_crear_proyecto,
-    dao_eliminar_proyecto,    
+    dao_eliminar_proyecto,
+    dao_actualizar_proyecto,     
 )
 
 router = APIRouter(prefix="/registro-proyecto", tags=["registro-proyecto"])
@@ -60,3 +61,24 @@ def eliminar_proyecto(
     if not result["deleted"]:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
     return {"mensaje": "Proyecto eliminado correctamente", "resultado": result}
+
+    # Ruta 13: Actualizar un proyecto
+# Método: PUT /registro-proyecto/update
+@router.put("/update")
+def actualizar_proyecto(
+    idPersona: int,
+    idProyecto: int,
+    proyectoDescripcion: str,
+    updateUser: str,
+    db: Session = Depends(get_db),
+):
+    result = dao_actualizar_proyecto(
+        db=db,
+        id_proyecto=idProyecto,
+        id_persona=idPersona,
+        proyecto_descripcion=proyectoDescripcion,
+        update_user=updateUser,
+    )
+    if not result["updated"]:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado o sin cambios")
+    return {"mensaje": "Proyecto actualizado correctamente", "resultado": result}
